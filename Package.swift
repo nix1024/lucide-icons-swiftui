@@ -11,5 +11,10 @@ let package = Package(
             resources: [.process("Resources")]
         ),
         .testTarget(name: "LucideIconsTests", dependencies: ["LucideIcons"]),
+        .testTarget(
+            name: "CustomIconTests",
+            dependencies: ["LucideIcons"],
+            resources: [.process("Resources")]
+        ),
     ]
 )

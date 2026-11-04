@@ -45,6 +45,35 @@ Button {
 - `Label(..., lucide: ...)` uses a 20-point icon. Use a custom Label icon closure to choose another size.
 - On iOS/tvOS, `LucideIconName.history.uiImage` returns a UIKit template image. It does not manage Dynamic Type sizing; UIKit callers own layout and scaling.
 
+## Custom icons
+
+Add your SVG or PDF to your app's asset catalogue, then use its asset name:
+
+```swift
+LucideIcon(asset: "company-logo")
+    .foregroundStyle(.blue)
+
+// Preserve a multicolor logo's original colors.
+LucideIcon(asset: "company-logo", renderingMode: .original, size: 32)
+
+// Inside a Swift Package that owns the asset:
+LucideIcon(asset: "custom-icon", bundle: .module, size: 20, relativeTo: .caption)
+```
+
+The bundle defaults to `.main`. Pass the bundle that owns the asset; `.module` in the example belongs to your package, not LucideIcons. Use the exact asset name, without a file extension or an automatic `lucide-` prefix. This initializer loads bundled image assets, not arbitrary SVG files or URLs.
+
+Custom icons share the built-in icons' Dynamic Type scaling, aspect-fit layout, and decorative accessibility behavior. Template rendering is the default; use `.original` for multicolor artwork. Enable **Preserve Vector Data** in your asset catalogue for scalable vector artwork. For custom icons in a `Label`, use its icon closure:
+
+```swift
+Label {
+    Text("Company")
+} icon: {
+    LucideIcon(asset: "company-logo", size: 20)
+}
+```
+
+API note: `LucideIcon.name` is now `LucideIconName?`: built-in icons return their name, and custom assets return `nil`. Existing built-in initializers are unchanged; code that reads `name` must handle the optional value.
+
 ## Keep your app small
 
 The default package bundles all 2,313 upstream names (including aliases), pinned to `lucide-static` 1.68.0. Adding the remote SPM product does **not** automatically strip unused images. Each app or extension may carry its own resource bundle.
