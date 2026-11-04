@@ -8,6 +8,6 @@
   "selectedIcons": "all",
   "generator": {
     "repository": "https://github.com/nix1024/lucide-icons-swiftui",
-    "version": "0.1.0"
+    "version": "0.2.0"
   }
 }

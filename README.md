@@ -2,14 +2,14 @@
 
 An unofficial Swift Package for [Lucide](https://lucide.dev) icons, with Dynamic Type scaling, template colors, and optional build-time subsetting. Not affiliated with the Lucide project.
 
-The resource-based API below describes the current development source and has not yet been released in a tag. Version 0.1.0 uses the earlier name-enum API.
+The resource-based API below is available starting in 0.2.0. Version 0.1.0 uses the earlier name-enum API.
 
 ## Install
 
 Add `https://github.com/nix1024/lucide-icons-swiftui` in Xcode's **Add Package Dependencies**, and select the `LucideIcons` product. Or add:
 
 ```swift
-.package(url: "https://github.com/nix1024/lucide-icons-swiftui.git", from: "0.1.0")
+.package(url: "https://github.com/nix1024/lucide-icons-swiftui.git", from: "0.2.0")
 ```
 
 Then add `.product(name: "LucideIcons", package: "lucide-icons-swiftui")` to your target's dependencies.

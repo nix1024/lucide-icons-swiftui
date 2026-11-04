@@ -128,7 +128,7 @@ def generate(package_root=ROOT, archive_path=None, selection_path=None):
             "integrity": "sha512-" + INTEGRITY, "iconCount": len(icons),
             "upstreamIconCount": len(available),
             "selectedIcons": sorted(selected) if selection_path is not None else "all",
-            "generator": {"repository": "https://github.com/nix1024/lucide-icons-swiftui", "version": "0.1.0"},
+            "generator": {"repository": "https://github.com/nix1024/lucide-icons-swiftui", "version": "0.2.0"},
         })
         if package_root.resolve() != ROOT.resolve():
             for name in ["Package.swift", "LICENSE"]:
