@@ -9,13 +9,25 @@ import Testing
 #endif
 
 @Test func everyIconHasAnAsset() {
-    for name in LucideIconName.allCases {
+    for (name, resource) in LucideIconCatalog.all {
         #if canImport(UIKit)
-            #expect(UIImage(named: name.assetName, in: .module, compatibleWith: nil) != nil, "Missing \(name.rawValue)")
+            #expect(resource.uiImage() != nil, "Missing \(name)")
         #else
-            #expect(Bundle.module.image(forResource: name.assetName) != nil, "Missing \(name.rawValue)")
+            #expect(resource.bundle.image(forResource: resource.assetName) != nil, "Missing \(name)")
         #endif
     }
+}
+
+@Test func catalogLooksUpExactNames() throws {
+    #expect(!LucideIconCatalog.all.isEmpty)
+    for (name, resource) in LucideIconCatalog.all {
+        #expect(LucideIconCatalog.icon(named: name) == resource)
+        #expect(resource.assetName == "lucide-" + name)
+    }
+    #expect(LucideIconCatalog.icon(named: "") == nil)
+    #expect(LucideIconCatalog.icon(named: "not-a-lucide-icon") == nil)
+    let name = try #require(LucideIconCatalog.all.keys.sorted().first)
+    #expect(LucideIconCatalog.icon(named: " " + name) == nil)
 }
 
 @available(iOS 16, macOS 13, *)
@@ -26,9 +38,10 @@ private func render(
     baseSize: CGFloat = 24,
     style: Font.TextStyle = .body
 ) throws -> CGImage {
-    let name = try #require(LucideIconName.allCases.first)
+    let name = try #require(LucideIconCatalog.all.keys.sorted().first)
+    let resource = try #require(LucideIconCatalog.icon(named: name))
     let renderer = ImageRenderer(content:
-        LucideIcon(name, size: baseSize, relativeTo: style)
+        LucideIcon(resource, size: baseSize, relativeTo: style)
             .foregroundStyle(.black)
             .fontWeight(bold ? .bold : .regular)
             .environment(\.legibilityWeight, bold ? .bold : .regular)

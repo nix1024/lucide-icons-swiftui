@@ -2,6 +2,14 @@ import LucideIcons
 import SwiftUI
 import Testing
 
+#if canImport(UIKit) && !os(watchOS)
+    import UIKit
+#endif
+
+private extension LucideIconResource {
+    static var companyLogo: Self { Self(asset: "company-logo", bundle: .module) }
+}
+
 @available(iOS 16, macOS 13, *)
 @MainActor
 private func render(
@@ -13,8 +21,7 @@ private func render(
 ) throws -> CGImage {
     let renderer = ImageRenderer(content:
         LucideIcon(
-            asset: "company-logo", bundle: .module, renderingMode: mode,
-            size: baseSize, relativeTo: style
+            .companyLogo, size: baseSize, relativeTo: style, renderingMode: mode
         )
         .foregroundStyle(color)
         .environment(\.dynamicTypeSize, size)
@@ -61,9 +68,38 @@ private func pixels(_ image: CGImage) throws -> [UInt8] {
         != render(size: .accessibility5, style: .title).width)
 }
 
-@Test @MainActor func customAssetsHaveNoBuiltInName() throws {
-    let builtIn = try #require(LucideIconName.allCases.first)
-    #expect(LucideIcon(builtIn).name == builtIn)
-    #expect(LucideIcon(asset: "company-logo", bundle: .module).name == nil)
-    #expect(LucideIcon(asset: "app-icon").name == nil)
+@Test func resourcesHaveValueSemanticsWithoutRegistration() throws {
+    let builtIn = try #require(LucideIconCatalog.all.values.first)
+    let icons: [LucideIconResource] = [builtIn, .companyLogo]
+    #expect(Set(icons).count == 2)
+    #expect(LucideIconResource.companyLogo == LucideIconResource(asset: "company-logo", bundle: .module))
+    #expect(LucideIconResource.companyLogo != LucideIconResource(asset: "company-logo", bundle: .main))
+    #expect(LucideIconCatalog.icon(named: "company-logo") == nil)
 }
+
+@available(iOS 17, macOS 14, tvOS 17, watchOS 10, *)
+@Test @MainActor func customResourcesWorkInConvenienceViews() throws {
+    let label = Label("Company", lucide: .companyLogo)
+    let labelImage = try #require(ImageRenderer(content: label).cgImage)
+    #expect(try pixels(labelImage).contains { $0 != 0 })
+    let emptyState = ContentUnavailableView("Company", lucide: .companyLogo, description: Text("No items"))
+    #expect(ImageRenderer(content: emptyState.frame(width: 320, height: 240)).cgImage != nil)
+    // Exercise the nonliteral and localized-resource overloads as public API clients.
+    let title = String("Company")
+    let _ = Label(title, lucide: .companyLogo)
+    let _ = Label(LocalizedStringResource("Company"), lucide: .companyLogo)
+    let _ = ContentUnavailableView(title, lucide: .companyLogo)
+}
+
+#if canImport(UIKit) && !os(watchOS)
+    @Test @MainActor func uiKitLoadsBothResourceKindsAndHandlesMissingAssets() throws {
+        let builtIn = try #require(LucideIconCatalog.all.values.first)
+        #expect(try #require(builtIn.uiImage()).renderingMode == .alwaysTemplate)
+        #expect(try #require(LucideIconResource.companyLogo.uiImage()).renderingMode == .alwaysTemplate)
+        #expect(try #require(LucideIconResource.companyLogo.uiImage(renderingMode: .alwaysOriginal))
+            .renderingMode == .alwaysOriginal)
+        #expect(LucideIconResource(asset: "missing-icon", bundle: .module).uiImage() == nil)
+        // An identically named resource must not resolve in the wrong bundle.
+        #expect(LucideIconResource(asset: "company-logo", bundle: builtIn.bundle).uiImage() == nil)
+    }
+#endif

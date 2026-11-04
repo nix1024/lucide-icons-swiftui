@@ -1,49 +1,34 @@
 import SwiftUI
 
+/// A decorative icon with aspect-fit layout and Dynamic Type scaling.
 public struct LucideIcon: View {
-    /// The built-in icon name, or `nil` for a custom asset.
-    public let name: LucideIconName?
-    private let image: Image
+    private let resource: LucideIconResource
     private let renderingMode: Image.TemplateRenderingMode
     @ScaledMetric private var scaledSize: CGFloat
 
+    /// Displays a built-in or custom resource.
+    ///
+    /// `size` is the square frame's side length at Dynamic Type `.large` and must
+    /// be finite and positive. It scales relative to `textStyle`, independently
+    /// of the parent's font. Use `.original` to preserve multicolor artwork.
+    /// Provide an accessibility label on the enclosing control when needed.
     public init(
-        _ name: LucideIconName,
+        _ resource: LucideIconResource,
         size: CGFloat = 24,
-        relativeTo textStyle: Font.TextStyle = .body
+        relativeTo textStyle: Font.TextStyle = .body,
+        renderingMode: Image.TemplateRenderingMode = .template
     ) {
         precondition(size.isFinite && size > 0, "Icon size must be finite and positive")
-        self.name = name
-        image = Image(decorative: name.assetName, bundle: .module)
-        renderingMode = .template
-        _scaledSize = ScaledMetric(wrappedValue: size, relativeTo: textStyle)
-    }
-
-    /// Displays an asset from the app or another resource bundle.
-    /// Use `.original` to preserve a multicolor asset's colors.
-    public init(
-        asset: String,
-        bundle: Bundle = .main,
-        renderingMode: Image.TemplateRenderingMode = .template,
-        size: CGFloat = 24,
-        relativeTo textStyle: Font.TextStyle = .body
-    ) {
-        precondition(size.isFinite && size > 0, "Icon size must be finite and positive")
-        name = nil
-        image = Image(decorative: asset, bundle: bundle)
+        self.resource = resource
         self.renderingMode = renderingMode
         _scaledSize = ScaledMetric(wrappedValue: size, relativeTo: textStyle)
     }
 
     public var body: some View {
-        image
+        Image(decorative: resource.assetName, bundle: resource.bundle)
             .renderingMode(renderingMode)
             .resizable()
             .scaledToFit()
             .frame(width: scaledSize, height: scaledSize)
     }
-}
-
-extension LucideIconName {
-    var assetName: String { "lucide-" + rawValue }
 }

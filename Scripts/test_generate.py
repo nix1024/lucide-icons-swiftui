@@ -41,7 +41,7 @@ class GenerationTests(unittest.TestCase):
         return {str(path.relative_to(self.root)): path.read_bytes()
                 for path in (self.root / "Sources").rglob("*") if path.is_file()}
 
-    def test_subset_removes_stale_assets_and_cases(self):
+    def test_subset_removes_stale_assets_and_resources(self):
         self.select(["history", "x"])
         self.run_generation()
         self.select(["history"])
@@ -49,9 +49,13 @@ class GenerationTests(unittest.TestCase):
         source = self.root / "Sources/LucideIcons"
         assets = source / "Resources/Lucide.xcassets"
         self.assertEqual([path.name for path in assets.glob("*.imageset")], ["lucide-history.imageset"])
-        enum = (source / "LucideIconName.generated.swift").read_text()
-        self.assertIn('case `history` = "history"', enum)
-        self.assertNotIn('case `x`', enum)
+        resources = (source / "LucideIconResource.generated.swift").read_text()
+        self.assertIn('static var `history`: Self { Self(asset: "lucide-history", bundle: .module) }', resources)
+        self.assertNotIn('static var `x`', resources)
+        catalog = (source / "LucideIconCatalog.generated.swift").read_text()
+        self.assertIn('"history": .`history`', catalog)
+        self.assertNotIn('"x":', catalog)
+        self.assertFalse((source / "LucideIconName.generated.swift").exists())
         self.assertEqual((source / "Resources/Lucide-LICENSE.txt").read_text(), "Upstream license")
         before = self.snapshot()
         self.run_generation()
@@ -71,8 +75,18 @@ class GenerationTests(unittest.TestCase):
     def test_alias_identifier_does_not_depend_on_selection(self):
         self.select(["arrow-down-01"])
         self.run_generation()
-        enum = (self.root / "Sources/LucideIcons/LucideIconName.generated.swift").read_text()
-        self.assertIn('case `arrow_down_01` = "arrow-down-01"', enum)
+        resources = (self.root / "Sources/LucideIcons/LucideIconResource.generated.swift").read_text()
+        self.assertIn('static var `arrow_down_01`:', resources)
+        self.assertIn('Self(asset: "lucide-arrow-down-01", bundle: .module)', resources)
+
+    def test_regeneration_removes_legacy_enum(self):
+        source = self.root / "Sources/LucideIcons"
+        source.mkdir(parents=True)
+        legacy = source / "LucideIconName.generated.swift"
+        legacy.write_text("public enum LucideIconName {}\n")
+        self.select(["history"])
+        self.run_generation()
+        self.assertFalse(legacy.exists())
 
     def test_full_package_and_subset_export(self):
         generate.generate(self.root, self.archive)
@@ -82,7 +96,9 @@ class GenerationTests(unittest.TestCase):
         self.assertTrue((self.root / "Package.swift").is_file())
         self.assertTrue((self.root / "LICENSE").is_file())
         self.assertTrue((self.root / "Sources/LucideIcons/LucideIcon.swift").is_file())
+        self.assertTrue((self.root / "Sources/LucideIcons/LucideIconResource.swift").is_file())
         self.assertTrue((self.root / "Tests/LucideIconsTests/LucideIconsTests.swift").is_file())
+        self.assertTrue((self.root / "Tests/CustomIconTests/Resources/Custom.xcassets/Contents.json").is_file())
 
     def test_invalid_archive_preserves_previous_output(self):
         self.select(["history"])
